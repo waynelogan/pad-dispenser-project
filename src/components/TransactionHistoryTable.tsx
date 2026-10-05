@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { MPesaPaymentRequest } from '@/types/dispenser';
 import { ShieldCheck, Search, Filter, Download, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import LocalTime from './LocalTime';
 
 interface TransactionHistoryTableProps {
   transactions: MPesaPaymentRequest[];
@@ -121,7 +122,7 @@ export default function TransactionHistoryTable({ transactions }: TransactionHis
                   </td>
                   <td style={{ fontWeight: 700, color: '#38bdf8' }}>KES {txn.totalAmountKes}</td>
                   <td style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                    {new Date(txn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    <LocalTime timestamp={txn.timestamp} />
                   </td>
                   <td>
                     <span
