@@ -8,7 +8,7 @@ interface RefillControlPanelProps {
   pads: PadItem[];
   onRefillAll: () => void;
   onUpdateSlotStock: (slotNumber: number, newStock: number) => void;
-  onTestMotor: (slotNumber: number) => void;
+  onTestMotor: (slotNumber: number) => void | Promise<void>;
   logs: TelemetryLogEntry[];
 }
 

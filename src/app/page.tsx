@@ -375,7 +375,10 @@ export default function Home() {
               pads={pads}
               onRefillAll={handleRefillAll}
               onUpdateSlotStock={handleUpdateSlotStock}
-              onTestMotor={handleQuickDispense}
+              onTestMotor={(slotNumber) => {
+                const pad = pads.find((p) => p.slotNumber === slotNumber);
+                if (pad) return handleQuickDispense(pad);
+              }}
               logs={logs}
             />
           </div>
