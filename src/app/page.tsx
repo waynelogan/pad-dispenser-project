@@ -4,18 +4,19 @@ import React, { useState, useEffect } from 'react';
 import HeaderNavbar from '@/components/HeaderNavbar';
 import PadStockCard from '@/components/PadStockCard';
 import ESP32CellularWidget from '@/components/ESP32CellularWidget';
+import ESP32PollWidget from '@/components/ESP32PollWidget';
 import MPesaPurchaseModal from '@/components/MPesaPurchaseModal';
 import TransactionHistoryTable from '@/components/TransactionHistoryTable';
 import RefillControlPanel from '@/components/RefillControlPanel';
 
-import { PadItem, ESP32Telemetry, MPesaPaymentRequest, TelemetryLogEntry } from '@/types/dispenser';
+import { PadItem, ESP32Telemetry, MPesaPaymentRequest, TelemetryLogEntry, DispenseOrder } from '@/types/dispenser';
 import { INITIAL_PADS, INITIAL_TELEMETRY, INITIAL_TRANSACTIONS, INITIAL_LOGS } from '@/lib/dispenserData';
 import { db } from '@/lib/firebase';
 import { ref, onValue, set } from 'firebase/database';
-import { ShieldCheck, Layers, ShoppingBag, Radio, Sparkles, AlertTriangle, CheckCircle2, TrendingUp, Cpu } from 'lucide-react';
+import { ShieldCheck, Layers, ShoppingBag, Radio, Sparkles, AlertTriangle, CheckCircle2, TrendingUp, Cpu, Database } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'purchase' | 'cellular' | 'refill' | 'transactions'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'purchase' | 'cellular' | 'polling' | 'refill' | 'transactions'>('dashboard');
   const [pads, setPads] = useState<PadItem[]>(INITIAL_PADS);
   const [telemetry, setTelemetry] = useState<ESP32Telemetry>(INITIAL_TELEMETRY);
   const [transactions, setTransactions] = useState<MPesaPaymentRequest[]>(INITIAL_TRANSACTIONS);
@@ -132,6 +133,26 @@ export default function Home() {
     } finally {
       setTimeout(() => setDispensingSlot(null), 800);
     }
+  };
+
+  const handleOrderDispensedFromMongoDB = (order: DispenseOrder) => {
+    // Decrement stock for dispensed slot
+    const updatedPads = pads.map((item) => {
+      if (item.slotNumber === order.slotNumber) {
+        return { ...item, currentStock: Math.max(0, item.currentStock - order.quantity) };
+      }
+      return item;
+    });
+    setPads(updatedPads);
+
+    const newLog: TelemetryLogEntry = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      type: 'SUCCESS',
+      message: `ESP32 HTTP GET Poll: Order ${order.orderId} Dispensed from Slot ${order.slotNumber}`,
+      details: `${order.quantity}x ${order.padName} - Source: ${order.source} - Status: DISPENSED`
+    };
+    setLogs((prev) => [newLog, ...prev]);
   };
 
   const handlePaymentSuccess = (newTxn: MPesaPaymentRequest) => {
@@ -302,6 +323,9 @@ export default function Home() {
               ))}
             </div>
 
+            {/* ESP32 HTTP GET Polling & MongoDB Order Queue */}
+            <ESP32PollWidget onOrderDispensed={handleOrderDispensedFromMongoDB} />
+
             {/* Cellular Diagnostics & Recent Activity */}
             <div className="grid-2col">
               <ESP32CellularWidget
@@ -311,6 +335,23 @@ export default function Home() {
 
               <TransactionHistoryTable transactions={transactions.slice(0, 4)} />
             </div>
+          </div>
+        )}
+
+        {/* TAB: ESP32 GET Polling Queue & MongoDB Monitor */}
+        {activeTab === 'polling' && (
+          <div>
+            <div className="section-header">
+              <div className="section-title-group">
+                <h1>
+                  <Database size={24} className="text-emerald-400" />
+                  ESP32 GET Polling & MongoDB Dispense Queue
+                </h1>
+                <p>Live MongoDB order database, ESP32 HTTP GET request poller, and hardware firmware code</p>
+              </div>
+            </div>
+
+            <ESP32PollWidget onOrderDispensed={handleOrderDispensedFromMongoDB} />
           </div>
         )}
 

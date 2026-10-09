@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Wifi, Signal, Battery, Layers, ShoppingBag, Radio, RefreshCw, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Wifi, Signal, Battery, Layers, ShoppingBag, Radio, RefreshCw, AlertTriangle, Database } from 'lucide-react';
 import { ESP32Telemetry } from '@/types/dispenser';
 
 interface HeaderNavbarProps {
   telemetry: ESP32Telemetry;
-  activeTab: 'dashboard' | 'purchase' | 'cellular' | 'refill' | 'transactions';
-  setActiveTab: (tab: 'dashboard' | 'purchase' | 'cellular' | 'refill' | 'transactions') => void;
+  activeTab: 'dashboard' | 'purchase' | 'cellular' | 'polling' | 'refill' | 'transactions';
+  setActiveTab: (tab: 'dashboard' | 'purchase' | 'cellular' | 'polling' | 'refill' | 'transactions') => void;
   isSyncing: boolean;
   onRefresh: () => void;
   lowStockCount: number;
@@ -49,6 +49,14 @@ export default function HeaderNavbar({
               {lowStockCount} alert
             </span>
           )}
+        </button>
+
+        <button
+          className={`tab-button ${activeTab === 'polling' ? 'active' : ''}`}
+          onClick={() => setActiveTab('polling')}
+        >
+          <Database size={16} className="text-emerald-400" />
+          ESP32 GET Queue
         </button>
 
         <button

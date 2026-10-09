@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createOrderInDB } from '@/lib/orderStore';
 
 function formatPhoneNumber(phone: string): string {
   let cleaned = phone.replace(/[^0-9]/g, '');
@@ -42,13 +43,25 @@ export async function POST(request: Request) {
 
     if (consumerKey && consumerSecret && passkey) {
       // Real Safaricom Daraja API STK Push logic would go here
-      // For now, return formatted structure with credentials active flag
     }
+
+    // Automatically store order in MongoDB for ESP32 GET polling
+    const mpesaReceiptSim = `QKS${Math.floor(100000 + Math.random() * 900000)}`;
+    const { order, dbMode } = await createOrderInDB({
+      slotNumber: Number(slotNumber || 1),
+      padId,
+      padName: padName || `Slot ${slotNumber} Pad`,
+      quantity: Number(quantity || 1),
+      totalAmountKes: Number(amount),
+      phoneNumber: formattedPhone,
+      mpesaReceipt: mpesaReceiptSim,
+      source: 'MPESA_PURCHASE'
+    });
 
     // Return STK Push success simulation response
     return NextResponse.json({
       success: true,
-      message: `M-Pesa STK Push initiated successfully to ${formattedPhone}`,
+      message: `M-Pesa STK Push initiated & order ${order.orderId} stored in MongoDB for ESP32 polling`,
       data: {
         checkoutRequestId,
         merchantRequestId,
@@ -60,8 +73,11 @@ export async function POST(request: Request) {
         quantity: Number(quantity || 1),
         timestamp: new Date().toISOString(),
         customerMessage: `Success. Prompt sent to ${formattedPhone}. Enter M-Pesa PIN on your phone to complete purchase.`
-      }
+      },
+      mongoOrder: order,
+      dbMode
     });
+
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to initiate M-Pesa STK Push' },

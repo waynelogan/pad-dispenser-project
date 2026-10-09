@@ -60,3 +60,31 @@ export interface TelemetryLogEntry {
   message: string;
   details?: string;
 }
+
+export interface DispenseOrder {
+  id: string;
+  orderId: string;
+  slotNumber: number;
+  padId: string;
+  padName: string;
+  quantity: number;
+  totalAmountKes: number;
+  phoneNumber?: string;
+  mpesaReceipt?: string;
+  status: 'PENDING' | 'DISPENSED' | 'FAILED' | 'CANCELLED';
+  createdAt: string;
+  dispensedAt?: string;
+  deviceId?: string;
+  polledCount?: number;
+  source: 'MPESA_PURCHASE' | 'MANUAL_TEST' | 'DASHBOARD_QUEUE' | 'SIMULATION';
+}
+
+export interface ESP32PollResponse {
+  success: boolean;
+  hasOrder: boolean;
+  order: DispenseOrder | null;
+  message: string;
+  pollTimestamp: string;
+  dbMode: 'MongoDB' | 'InMemoryFallback';
+}
+
